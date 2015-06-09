@@ -244,6 +244,258 @@ window.onload = function() {
 		return output;
 	}
 
+
+
+	function busOntheMap(data, lines)
+	{
+		//
+		data = analysesData(data);
+		var in_range_buses = [];
+		lines = lines || []; // default: no lines to validate
+		var skip_line_validator = true;
+
+		// checks if should validate lines
+		if (lines.length != 0) {
+			console.log(lines);
+			skip_line_validator = false;
+		}
+		var tmp =0;
+		data.map(function(data) {
+			var busArray = data["DATA"];
+			for(var i = 0 ; i<busArray.length ; i++)
+			{
+				var speed = busArray[i][5];
+				var line = busArray[i][2];
+
+				if(($.inArray(line.toString(), lines) >= 0) || skip_line_validator )
+				{
+					if (speed >0) //getting only buses which are running
+					{
+						tmp++;
+						in_range_buses.push(busArray[i]);
+					}
+				}
+
+			}
+		});
+		console.log("Found : "+tmp+" buses for line(s): " + lines);
+		if(tmp!=0)
+		{
+
+			var map  = setUpGoogleMaps();
+			//creates only one polygone line ordered by position..
+			//not the best option
+			//better to do with salesman traveling problem.
+
+			//var order = orderByPosition(in_range_buses);
+			//addSimplePolygone(order, map);
+
+
+			addMarkers(in_range_buses , map);
+
+
+			// order by bus id
+			//creates a polygone line for each id bus
+			var orderedBuses = orderByIdBus(in_range_buses);
+
+			//console.log(orderedBuses);
+			//should work when we ll have various buses from the same id
+			///need to check before if it is ordered well  ;
+			//utility functions : orderByIdBus;
+			addPolygone(orderedBuses, map)
+
+
+			//salesman traveling problem
+			//createDirections(in_range_buses, map);
+		}
+		// prepare output
+		var output = {
+			"numberOfBuses": calculatesAverageNumber(in_range_buses, data),
+			"buses": in_range_buses,
+			"numberOfJsonsInData": data.length,
+			"total": calculateTotalBuses(data)
+		};
+
+		return output;
+	}
+
+	function setUpGoogleMaps()
+	{
+
+		var latlng = new google.maps.LatLng(-22.91325725,-43.6628216475272);
+
+		var options = {
+			center: latlng,
+			zoom: 8,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		};
+
+		var map = new google.maps.Map(document.getElementById("gmaps"), options);
+		$('#gmaps').show();
+
+		return map;
+	}
+
+	function addMarkers(in_range_buses , maps)
+	{
+
+		for(i=0; i<in_range_buses.length ; i++ )
+		{
+			new google.maps.Marker({
+				position: new google.maps.LatLng(in_range_buses[i][3] , in_range_buses[i][4]),
+				map: maps,
+				title: "id bus : " + in_range_buses[i][2] + " at time : " +  in_range_buses[i][1]
+			});
+		}
+	}
+
+
+	function orderByIdBus(data)
+	{
+		//thats ugly but actually works to order by bus name
+		var newArray = [];
+		//sort by id buses
+		data.sort(function(a, b) {
+			a = a[1];
+			b = b[1];
+			return a>b ? -1 : a<b ? 1 : 0;
+		});
+		var last = null;
+		var j=-1; //thats quite weird;
+		//class array by buses
+		for(i = 0 ; i<data.length ; i++)
+		{
+			current = data[i][1];
+			if(last != current)
+			{
+				j++;
+				newArray[j] = [];
+				newArray[j].push(data[i]);
+
+			}else
+			{
+				newArray[j].push(data[i]);
+			}
+			last=current;
+
+		}
+		// now sort by date each buses
+		for(i=0; i<newArray.length;i++)
+		{
+			newArray[i].sort(function(a, b) {
+				//plus ancienne a plus proche
+				timeA = a[0];
+				timeB = b[0];
+				a = new Date(timeA);
+				b = new Date(timeB);
+				return a>b ? 1 : a<b ? -1 : 0;
+			});
+		}
+		return newArray;
+	}
+
+
+
+	function addPolygone(in_range_buses, maps)
+	{
+		for(j=0; j<in_range_buses.length;j++)
+		{
+			tmp = [];
+			//convert data
+			for(i=0;i<in_range_buses[j].length;i++)
+			{
+				if(in_range_buses[j][i][3] != "" && in_range_buses[j][i][4] != "")
+				{
+					tmp.push({
+						'lat' :in_range_buses[j][i][3],
+						'lng' :in_range_buses[j][i][4]
+					});
+				}
+			}
+
+			//var result = getEnveloppeConvexe(tmp);
+			createPolygone(maps, tmp, {
+				'zIndex' : 3,
+				'fillOpacity': 0,
+				'strokeColor': '#'+Math.floor(Math.random()*16777215).toString(16),//just random color
+				'strokeOpacity': 0.3,//opacité
+				'strokeWeight': 1//grosseur
+			});
+
+		}
+	}
+
+
+	function addSimplePolygone(in_range_buses, maps)
+	{
+
+		tmp = [];
+		//convert data
+		for(i=0;i<in_range_buses.length;i++)
+		{
+			if(in_range_buses[i][3] != "" && in_range_buses[i][4] != "")
+			{
+				tmp.push({
+					'lat' :in_range_buses[i][3],
+					'lng' :in_range_buses[i][4]
+				});
+			}
+		}
+
+		//var result = getEnveloppeConvexe(tmp);
+		createPolygone(maps, tmp, {
+			'zIndex' : 3,
+			'fillOpacity': 0,
+			'strokeColor': '#'+Math.floor(Math.random()*16777215).toString(16),//just random color
+			'strokeOpacity': 0.3,//opacité
+			'strokeWeight': 1//grosseur
+		});
+
+	}
+	function createPolygone(map, data, options){
+		var oPoly, oPath=[],
+			i, nbr = data.length;
+		// creation du polygone
+		for( i=0; i < nbr; i++){
+			oPath.push( new google.maps.LatLng( data[i].lat, data[i].lng));
+		}
+		// affiche le polygone
+		oPoly = new google.maps.Polygon({
+			'path': oPath,
+			'map': map
+		});
+		// set paramÃ¨tres options
+		if(options){
+			oPoly.setOptions( options);
+		}
+		return oPoly;
+	}
+
+	function createDirections(in_range_buses, maps)
+	{
+		tmp = [];
+
+		for(i=0;i<in_range_buses.length;i++)
+		{
+			if(in_range_buses[i][3] != null && in_range_buses[i][4] != null)
+				if(in_range_buses[i][3] != "" && in_range_buses[i][4] != "")
+					if(in_range_buses[i][3] != 0 && in_range_buses[i][4] != 0)
+						tmp.push( new google.maps.LatLng(in_range_buses[i][3], in_range_buses[i][4]));
+					else
+						console.log("Bus = 0 " + in_range_buses[i][3] +"|"+ in_range_buses[i][4]);
+				else
+					console.log("Bus = \"\" " + in_range_buses[i][3] +"|"+ in_range_buses[i][4]);
+			else
+				console.log("Bus = null " + in_range_buses[i][3] +"|"+ in_range_buses[i][4]);
+		}
+		initGa(maps, tmp);
+	}
+
+	//////////////////////////////	//////////////////////////////	//////////////////////////////
+
+
+
+
 	function contains(array, obj) {
 		var l = array.length;
 
@@ -411,6 +663,12 @@ window.onload = function() {
 						lines = lines.split(/\s*,\s*/g);
 					result = busesInSpeedRange(mins, maxs, data, lines);
 					break;
+				case "bus-on-map" :
+					var lines = $('#linea').val();
+					if (lines)
+						lines = lines.split(/\s*,\s*/g);
+					result = busOntheMap(data, lines);
+					break;
 			}
 			generateTable(result,selected);
 		});
@@ -467,6 +725,9 @@ $(function(){
 				break;
 			case "buses-by-speed":
 				infoText = "Relatório gerado a partir das datas selecionadas que mostra os ônibus dentro da faixa de velocidade passada.";
+				break;
+			case "bus-on-map":
+				infoText = "Relatório gerado a partir das datas selecionadas que mostra a rota do ônibus .";
 				break;
 			default:
 				infoText = "";

@@ -55,6 +55,8 @@
                   <li><a data-input-id="show-map">Localização das Garagens</a></li>
 				  <li class="divider"></li>
                   <li><a data-input-id="show-graph1">Média de velocidade por região</a></li>
+                    <li class="divider"></li>
+                    <li><a data-input-id="bus-on-map">Trajetos Onibus</a></li>
                 </ul>
               </li>
             </ul>
@@ -193,6 +195,30 @@
             </div>
         </div>
 
+
+
+    <!-- buses on the map : ugly becouse there is twice lines form input... -->
+           <div class="form-group" data-form-name="bus-on-map">
+               <div class="col-sm-offset-1 col-sm-10">
+                   <div class="checkbox">
+                       <label>
+                           <input name="report" type="radio" value="bus-on-map" > Ônibus no map
+                       </label>
+                   </div>
+               </div>
+           </div>
+           <div class="form-group" data-form-name="bus-on-map">
+               <label for="linea" class="col-sm-2 control-label">Linhas</label>
+               <div class="col-sm-10">
+                   <input type="text" class="form-control" id="linea" placeholder="(escolha uma linea para fazer analis)">
+               </div>
+           </div>
+
+
+
+
+
+
         <div class="form-group col-sm-12" data-form-name="show-map" id="show-map">
 			<p>Inferência automática através da análise de ônibus parados entre 2 e 4 da manhã</p>
               <iframe src="http://riob.us/relatorios/garagens.html" width="100%" height="100%"></iframe>
@@ -204,7 +230,11 @@
             </div>
         </div>
 
-        <div class="col-md-offset-1" >
+
+   <!-- general form for everyone. -->
+
+
+           <div class="col-md-offset-1" >
           <div class="radio-inline">
             <label>
               <input type="radio" name="dateNow" id="dateNow" checked>
@@ -238,6 +268,14 @@
                 </button>
             </div>
         </div>
+
+
+<!-- Result divs -->
+
+
+   <!-- buses on the map : google maps div. -->
+       <div id="gmaps" style="width:800px; height:600px; margin:0px; margin-right:12px; background-color:#F0F0F0; float:left; overflow:hidden; display:none"></div>
+
         <div id='dataRioOut' style="display:none">O servidor da prefeitura encontra-se com problemas. Estamos mostrando o resultado da data:  </div>
         <button type="button" id="csv-button" class="btn btn-success" style="display:none"> Download CSV </button>
         <div id='dados-analisados'></div>
@@ -245,7 +283,7 @@
         <h2> </h2>
         <table class='table table-bordered'><thead></thead><tbody></tbody></table>
         </div>
-        <form>
+        </form>
         </div>
         
         </body>

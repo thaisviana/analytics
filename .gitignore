@@ -29,3 +29,15 @@ node_modules
 queue.json
 queue.json.gz
 files/**
+
+.idea/.name
+
+.idea/analytics.iml
+
+.idea/misc.xml
+
+.idea/modules.xml
+
+.idea/vcs.xml
+
+.idea/workspace.xml
