@@ -206,6 +206,43 @@ window.onload = function() {
 
 		return output;
 	}
+	
+	
+	
+	
+	
+function sizeOfPerimeterOfLine(lines) {
+	urlLines = "http://rest.riob.us/itinerary/"+lines;
+	$.getJSON(urlLines, function(data, status) {	
+	/*
+	Formula que o Celso propos.
+	6371*Math.acos(Math.cos(Math.pi*(90-lat2)/180)*Math.cos((90-lat1)*Math.pi/180)+ Math.sin((90-lat2)*Math.pi/180)*Math.sin((90-lat1)*Math.pi/180)*Math.cos((lon1-lon2)*Math.pi/180))
+	*/
+		var distancia=0;
+		var lat1= (data[0].latitude);
+		var lon1= (data[0].longitude);
+		data=analysesData(data);//this converts JSON to array
+		var pi = 3.141592653589793;
+		for(var i=1; i<data.length;i++){
+			lat2 = (data[i].latitude);
+			lon2 = (data[i].longitude);
+			//[CALCULO ANTIGO]distancia += Math.sqrt((lat1-lat2)^2+(lon1-lon2)^2);
+			//ATENCAO---> O JAVASCRIPT ARRENDA ERRADO NA NONA CASA DECIMAL
+			temp=Math.cos(pi*(90-lat2)/180)*Math.cos((90-lat1)*pi/180)+ Math.sin((90-lat2)*pi/180)*Math.sin((90-lat1)*pi/180)*Math.cos((lon1-lon2)*pi/180);
+			if(temp>1)temp=1;
+			distancia += (6371*Math.acos(temp));
+			lat1 =lat2;
+			lon1=lon2;
+		}
+		
+		console.log(distancia);
+	});
+
+	
+	
+	 //distancia em km entre 2 pontos, se estiverem em decimal degrees
+	
+}
 
 
 	function busesInSpeedRange(min_speed, max_speed, data, lines) {
@@ -597,6 +634,10 @@ window.onload = function() {
 
 	$(document).on('click', '#button', function() {
 		startLoadingAnimation();
+		
+		sizeOfPerimeterOfLine(485);
+				
+				
 		var selected = $('input[name="report"]:checked').val();
 		var dateNow = $("#dateNow");
 		var initialDate = $("#initialDate").val();
@@ -604,8 +645,8 @@ window.onload = function() {
 		var url;
 
 		if (dateNow.is(":checked") == true) {
-			url = "http://rest.riob.us:81/all?callback=?";
-		}
+			//url = "http://rest.riob.us:81/all?callback=?";
+			}
 		else {
 			//converting to correct format, from datetime input, using moment js
 			if (initialDate.length == 0 && finalDate.length == 0 ){
@@ -716,6 +757,9 @@ $(function(){
 				break;
 			case "stopped":
 				infoText = "Relatório gerado a partir das datas selecionadas que mostra os ônibus com a velocidade máxima passada (zero para parados) ao redor de uma área.";
+				break;
+			case "teste":
+				infoText = "Relatório teste para os alunos de Software Livre e Metodologias Participativas 2015-1.";
 				break;
 			case "outdated-gps":
 				infoText = "Relatório gerado a partir das datas selecionadas que mostra os ônibus com dados do gps desatualizados de acordo com o número passado.";
