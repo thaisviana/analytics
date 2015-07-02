@@ -2,10 +2,12 @@ window.onload = function() {
 
 	// 'data' é uma variavel ja definida no outro arquivo javascript. vc precisa manipular essa variavel 'data'.
 	$('.form-horizontal').hide();
+	  $('#init').show();
 	$('li').click(function() {    
        $('.form-horizontal').show();
 	   $('#init').hide();
     });
+	$('#barchart_values').hide();
 	$('h1').text("Bem vindo");
 	// remove empty jsons of data
 	var analysesData = function(data) {
